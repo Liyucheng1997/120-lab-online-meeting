@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>视频会议</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="homeView" class="home-view" aria-labelledby="homeTitle">
+        <div class="home-panel">
+          <div>
+            <p class="eyebrow">Web Meeting</p>
+            <h1 id="homeTitle">视频会议</h1>
+            <p class="subtle">创建会议后分享链接，对方打开链接即可加入实时音视频通话。</p>
+          </div>
+
+          <form id="createForm" class="meeting-form">
+            <label>
+              昵称
+              <input id="homeNameInput" autocomplete="name" maxlength="40" placeholder="输入你的名字" />
+            </label>
+            <button type="submit">创建会议</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="meetingView" class="meeting-view hidden" aria-label="会议室">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">会议室</p>
+            <h1 id="roomTitle">正在加入会议</h1>
+          </div>
+          <div class="topbar-actions">
+            <button id="copyLinkButton" type="button" class="secondary">复制链接</button>
+            <button id="leaveButton" type="button" class="danger">离开</button>
+          </div>
+        </header>
+
+        <section id="joinCard" class="join-card">
+          <form id="joinForm" class="meeting-form">
+            <label>
+              昵称
+              <input id="meetingNameInput" autocomplete="name" maxlength="40" placeholder="输入你的名字" />
+            </label>
+            <button type="submit">进入会议</button>
+          </form>
+          <p id="permissionHint" class="subtle">浏览器会请求摄像头和麦克风权限。</p>
+        </section>
+
+        <section id="callArea" class="call-area hidden">
+          <div id="videoGrid" class="video-grid"></div>
+
+          <aside class="side-panel">
+            <div>
+              <h2>参会者</h2>
+              <ul id="participantList" class="participant-list"></ul>
+            </div>
+
+            <div class="chat">
+              <h2>消息</h2>
+              <div id="chatMessages" class="chat-messages"></div>
+              <form id="chatForm" class="chat-form">
+                <input id="chatInput" autocomplete="off" maxlength="500" placeholder="发送消息" />
+                <button type="submit" aria-label="发送">发送</button>
+              </form>
+            </div>
+          </aside>
+        </section>
+
+        <footer id="controls" class="controls hidden">
+          <button id="muteButton" type="button" class="control-button" aria-pressed="false">麦克风</button>
+          <button id="cameraButton" type="button" class="control-button" aria-pressed="false">摄像头</button>
+          <button id="screenButton" type="button" class="control-button" aria-pressed="false">共享屏幕</button>
+          <button id="whiteboardButton" type="button" class="control-button" aria-pressed="false">白板</button>
+          <span id="statusText" class="status-text">未连接</span>
+        </footer>
+
+        <section id="whiteboardPanel" class="whiteboard-panel hidden" aria-label="协作白板">
+          <header class="whiteboard-toolbar">
+            <div class="tool-group" aria-label="白板工具">
+              <button type="button" class="tool-button active" data-tool="pen">手写</button>
+              <button type="button" class="tool-button" data-tool="highlighter">荧光笔</button>
+              <button type="button" class="tool-button" data-tool="text">文字</button>
+              <button type="button" class="tool-button" data-tool="eraser">橡皮</button>
+            </div>
+
+            <label class="compact-field">
+              颜色
+              <input id="whiteboardColor" type="color" value="#2563eb" />
+            </label>
+
+            <label class="compact-field range-field">
+              粗细
+              <input id="whiteboardSize" type="range" min="2" max="32" value="5" />
+            </label>
+
+            <input id="whiteboardTextInput" class="whiteboard-text-input" maxlength="200" placeholder="输入文字后点击白板" />
+
+            <div class="whiteboard-actions">
+              <button id="clearWhiteboardButton" type="button" class="secondary">清空</button>
+              <button id="closeWhiteboardButton" type="button" class="secondary">关闭</button>
+            </div>
+          </header>
+
+          <div id="whiteboardSurface" class="whiteboard-surface">
+            <canvas id="whiteboardCanvas"></canvas>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

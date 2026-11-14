@@ -2,112 +2,321 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>视频会议</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <title>云会议 · AI 视频会议</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230071e3'/%3E%3Cpath d='M8 12a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2z M20 15l4-3v8l-4-3z' fill='white'/%3E%3C/svg%3E" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
+    <div id="toastHost" class="toast-host" aria-live="polite"></div>
+
     <main class="app-shell">
-      <section id="homeView" class="home-view" aria-labelledby="homeTitle">
-        <div class="home-panel">
-          <div>
-            <p class="eyebrow">Web Meeting</p>
-            <h1 id="homeTitle">视频会议</h1>
-            <p class="subtle">创建会议后分享链接，对方打开链接即可加入实时音视频通话。</p>
+      <!-- 首页 -->
+      <section id="homeView" class="home-view hidden" aria-labelledby="homeTitle">
+        <header class="home-top">
+          <div class="brand">
+            <span class="logo-mark" data-icon="video" data-icon-size="18"></span>
+            <div class="brand-text"><b>云会议</b><small>AI Meeting</small></div>
+          </div>
+          <span id="homeClock" class="home-clock tabular"></span>
+        </header>
+
+        <div class="home-hero">
+          <div class="hero-copy">
+            <h1 id="homeTitle">开会，<br />笔记交给 AI。</h1>
+            <p class="hero-sub">高清视频会议，实时字幕与同声翻译，AI 自动记笔记、整理会议纪要。打开链接即可加入，无需安装。</p>
+
+            <div class="home-actions">
+              <button id="newMeetingButton" type="button" class="btn btn-primary btn-lg" data-icon="plus">新会议</button>
+              <form id="joinCodeForm" class="join-code">
+                <span class="join-code-icon" data-icon="link" data-icon-size="18"></span>
+                <input id="joinCodeInput" autocomplete="off" placeholder="输入会议代码或链接" aria-label="会议代码或链接" />
+                <button type="submit" class="btn btn-ghost">加入</button>
+              </form>
+            </div>
+            <p id="recentMeeting" class="recent-meeting hidden"></p>
           </div>
 
-          <form id="createForm" class="meeting-form">
-            <label>
-              昵称
-              <input id="homeNameInput" autocomplete="name" maxlength="40" placeholder="输入你的名字" />
-            </label>
-            <button type="submit">创建会议</button>
-          </form>
+          <div class="feature-grid">
+            <article class="feature-card">
+              <span class="feature-ico" data-icon="notebook"></span>
+              <h3>AI 实时笔记</h3>
+              <p>边开会边生成要点、决议和待办，自动识别负责人。</p>
+            </article>
+            <article class="feature-card">
+              <span class="feature-ico" data-icon="languages"></span>
+              <h3>字幕与同声翻译</h3>
+              <p>每个人看自己语言的字幕，支持 12 种语言互译。</p>
+            </article>
+            <article class="feature-card">
+              <span class="feature-ico" data-icon="file"></span>
+              <h3>一键会议纪要</h3>
+              <p>会后生成结构化纪要：摘要、议题、决议、待办表。</p>
+            </article>
+            <article class="feature-card">
+              <span class="feature-ico" data-icon="ask"></span>
+              <h3>问 AI</h3>
+              <p>“我错过了什么？” 迟到也能马上跟上进度。</p>
+            </article>
+          </div>
+        </div>
+
+        <footer class="home-foot">
+          <span>屏幕共享</span><span>协作白板</span><span>本地录制</span><span>举手与表情</span><span>主持人控制</span><span>端到端 P2P 传输</span>
+        </footer>
+      </section>
+
+      <!-- 入会前预览 -->
+      <section id="lobbyView" class="lobby-view hidden" aria-label="入会前预览">
+        <header class="home-top">
+          <a class="brand" href="/">
+            <span class="logo-mark" data-icon="video" data-icon-size="18"></span>
+            <div class="brand-text"><b>云会议</b><small>AI Meeting</small></div>
+          </a>
+        </header>
+
+        <div class="lobby-body">
+          <div class="lobby-preview">
+            <video id="previewVideo" autoplay playsinline muted></video>
+            <div id="previewAvatar" class="preview-avatar hidden"><span></span><p>摄像头已关闭</p></div>
+            <div class="preview-meter" title="麦克风音量"><span id="previewMeter"></span></div>
+            <div class="preview-controls">
+              <button id="previewMicButton" type="button" class="round-btn" aria-label="麦克风"></button>
+              <button id="previewCamButton" type="button" class="round-btn" aria-label="摄像头"></button>
+            </div>
+          </div>
+
+          <div class="lobby-side">
+            <p class="eyebrow">准备加入</p>
+            <h2 id="lobbyTitle">会议</h2>
+            <p id="lobbyCode" class="muted tabular"></p>
+
+            <form id="joinForm" class="form">
+              <label class="field">
+                <span>你的名字</span>
+                <input id="nameInput" class="input" autocomplete="name" maxlength="40" placeholder="输入你的名字" />
+              </label>
+              <label class="field">
+                <span>麦克风</span>
+                <select id="lobbyMicSelect" class="input"></select>
+              </label>
+              <label class="field">
+                <span>摄像头</span>
+                <select id="lobbyCamSelect" class="input"></select>
+              </label>
+              <label class="field">
+                <span>我说的语言 <em class="muted">用于字幕和 AI 记录</em></span>
+                <select id="lobbyLangSelect" class="input"></select>
+              </label>
+              <button id="joinButton" type="submit" class="btn btn-primary btn-lg">加入会议</button>
+            </form>
+            <p id="lobbyHint" class="lobby-hint"></p>
+          </div>
         </div>
       </section>
 
+      <!-- 会议室 -->
       <section id="meetingView" class="meeting-view hidden" aria-label="会议室">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">会议室</p>
-            <h1 id="roomTitle">正在加入会议</h1>
+        <header class="meeting-top">
+          <div class="meeting-info">
+            <span class="logo-mark sm" data-icon="video" data-icon-size="15"></span>
+            <div class="meeting-name">
+              <b id="meetingTitle">会议</b>
+              <span id="meetingTimer" class="tabular">00:00</span>
+            </div>
+            <span id="recordingBadge" class="status-pill is-danger hidden">录制中</span>
+            <span id="transcribeBadge" class="status-pill is-ai hidden">AI 正在记录</span>
+            <span id="lockBadge" class="status-pill hidden">已锁定</span>
           </div>
-          <div class="topbar-actions">
-            <button id="copyLinkButton" type="button" class="secondary">复制链接</button>
-            <button id="leaveButton" type="button" class="danger">离开</button>
+          <div class="top-actions">
+            <span id="connectionStatus" class="conn-status"></span>
+            <button id="layoutButton" type="button" class="icon-btn" title="切换布局" aria-label="切换布局"></button>
+            <button id="copyLinkButton" type="button" class="btn btn-sm" data-icon="copy" data-icon-size="15">邀请</button>
           </div>
         </header>
 
-        <section id="joinCard" class="join-card">
-          <form id="joinForm" class="meeting-form">
-            <label>
-              昵称
-              <input id="meetingNameInput" autocomplete="name" maxlength="40" placeholder="输入你的名字" />
-            </label>
-            <button type="submit">进入会议</button>
-          </form>
-          <p id="permissionHint" class="subtle">浏览器会请求摄像头和麦克风权限。</p>
-        </section>
+        <div class="meeting-body">
+          <div class="stage-wrap">
+            <div id="stage" class="stage">
+              <div id="videoGrid" class="video-grid"></div>
+            </div>
+            <div id="captionBar" class="caption-bar hidden" aria-live="polite"></div>
+            <div id="reactionLayer" class="reaction-layer" aria-hidden="true"></div>
+          </div>
 
-        <section id="callArea" class="call-area hidden">
-          <div id="videoGrid" class="video-grid"></div>
+          <aside id="sidePanel" class="side-panel hidden" aria-label="侧边栏">
+            <header class="panel-head">
+              <div class="seg" id="panelTabs" role="tablist">
+                <button type="button" data-panel="people">参会者 <span id="peopleCount" class="count"></span></button>
+                <button type="button" data-panel="chat">聊天</button>
+                <button type="button" data-panel="ai">AI 助手</button>
+              </div>
+              <button id="closePanelButton" type="button" class="modal-x" aria-label="关闭侧边栏"></button>
+            </header>
 
-          <aside class="side-panel">
-            <div>
-              <h2>参会者</h2>
+            <div class="pane" data-pane="people">
+              <div id="hostTools" class="host-tools hidden">
+                <button id="muteAllButton" type="button" class="btn btn-sm" data-icon="micOff" data-icon-size="15">全部静音</button>
+                <button id="lockButton" type="button" class="btn btn-sm" data-icon="lock" data-icon-size="15">锁定会议</button>
+              </div>
               <ul id="participantList" class="participant-list"></ul>
             </div>
 
-            <div class="chat">
-              <h2>消息</h2>
-              <div id="chatMessages" class="chat-messages"></div>
+            <div class="pane" data-pane="chat">
+              <div id="chatMessages" class="chat-messages">
+                <p class="empty-hint">消息会对所有参会者可见。</p>
+              </div>
               <form id="chatForm" class="chat-form">
-                <input id="chatInput" autocomplete="off" maxlength="500" placeholder="发送消息" />
-                <button type="submit" aria-label="发送">发送</button>
+                <input id="chatInput" class="input" autocomplete="off" maxlength="1000" placeholder="发送消息" />
+                <button type="submit" class="icon-btn send-btn" aria-label="发送" data-icon="send" data-icon-size="17"></button>
               </form>
             </div>
-          </aside>
-        </section>
 
-        <footer id="controls" class="controls hidden">
-          <button id="muteButton" type="button" class="control-button" aria-pressed="false">麦克风</button>
-          <button id="cameraButton" type="button" class="control-button" aria-pressed="false">摄像头</button>
-          <button id="screenButton" type="button" class="control-button" aria-pressed="false">共享屏幕</button>
-          <button id="whiteboardButton" type="button" class="control-button" aria-pressed="false">白板</button>
-          <span id="statusText" class="status-text">未连接</span>
+            <div class="pane ai-pane" data-pane="ai">
+              <div id="aiNotice" class="ai-notice hidden"></div>
+              <div class="seg seg-full" id="aiTabs" role="tablist">
+                <button type="button" data-ai-tab="transcript">转写</button>
+                <button type="button" data-ai-tab="notes">笔记</button>
+                <button type="button" data-ai-tab="minutes">纪要</button>
+                <button type="button" data-ai-tab="ask">问 AI</button>
+              </div>
+
+              <div class="ai-section" data-ai-pane="transcript">
+                <div class="ai-toolbar">
+                  <button id="transcribeButton" type="button" class="btn btn-sm btn-primary">开始转写</button>
+                  <label class="mini-select" title="把字幕和转写翻译成">
+                    <span data-icon="languages" data-icon-size="15"></span>
+                    <select id="translateSelect" aria-label="翻译成"></select>
+                  </label>
+                  <button id="exportTranscriptButton" type="button" class="icon-btn" title="导出转写" aria-label="导出转写" data-icon="download" data-icon-size="17"></button>
+                </div>
+                <p id="speechHint" class="ai-hint hidden"></p>
+                <div id="transcriptList" class="transcript-list">
+                  <div class="empty-state">
+                    <span data-icon="captions" data-icon-size="30"></span>
+                    <p>开启转写后，所有人的发言会实时变成文字，并可翻译成你的语言。</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ai-section" data-ai-pane="notes">
+                <div class="ai-toolbar">
+                  <button id="notesButton" type="button" class="btn btn-sm btn-primary" data-icon="sparkles" data-icon-size="15">更新笔记</button>
+                  <span id="notesMeta" class="ai-meta"></span>
+                </div>
+                <div id="notesContent" class="notes-content">
+                  <div class="empty-state">
+                    <span data-icon="notebook" data-icon-size="30"></span>
+                    <p>AI 会根据转写自动整理要点、决议和待办。转写开启后每隔约 90 秒自动更新。</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ai-section" data-ai-pane="minutes">
+                <div class="ai-toolbar">
+                  <button id="minutesButton" type="button" class="btn btn-sm btn-primary" data-icon="sparkles" data-icon-size="15">生成会议纪要</button>
+                  <button id="copyMinutesButton" type="button" class="icon-btn" title="复制" aria-label="复制纪要" data-icon="copy" data-icon-size="17" disabled></button>
+                  <button id="downloadMinutesButton" type="button" class="icon-btn" title="下载 Markdown" aria-label="下载纪要" data-icon="download" data-icon-size="17" disabled></button>
+                </div>
+                <div id="minutesContent" class="markdown minutes-content">
+                  <div class="empty-state">
+                    <span data-icon="file" data-icon-size="30"></span>
+                    <p>根据整场会议的转写和聊天，生成正式的会议纪要：摘要、议题讨论、决议、待办表。</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ai-section" data-ai-pane="ask">
+                <div id="askThread" class="ask-thread">
+                  <div class="ask-chips">
+                    <button type="button" class="chip" data-ask="我错过了什么？请简要说明。">我错过了什么？</button>
+                    <button type="button" class="chip" data-ask="到目前为止做了哪些决定？">做了哪些决定？</button>
+                    <button type="button" class="chip" data-ask="列出所有待办事项和负责人。">待办和负责人</button>
+                    <button type="button" class="chip" data-ask="用三句话总结这场会议。">三句话总结</button>
+                  </div>
+                </div>
+                <form id="askForm" class="chat-form">
+                  <input id="askInput" class="input" autocomplete="off" maxlength="1000" placeholder="问问关于这场会议的任何事" />
+                  <button type="submit" class="icon-btn send-btn" aria-label="提问" data-icon="send" data-icon-size="17"></button>
+                </form>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <footer class="control-bar">
+          <div class="cb-side cb-left">
+            <span id="clockText" class="tabular"></span>
+          </div>
+
+          <div class="cb-center">
+            <button id="micButton" type="button" class="ctrl" title="麦克风 (Ctrl+D)" aria-label="麦克风"></button>
+            <button id="camButton" type="button" class="ctrl" title="摄像头 (Ctrl+E)" aria-label="摄像头"></button>
+            <button id="screenButton" type="button" class="ctrl" title="共享屏幕" aria-label="共享屏幕" data-icon="screen"></button>
+            <button id="captionButton" type="button" class="ctrl" title="字幕 (Alt+C)" aria-label="字幕" data-icon="captions"></button>
+            <button id="reactionButton" type="button" class="ctrl" title="表情" aria-label="表情" data-icon="smile"></button>
+            <button id="handButton" type="button" class="ctrl" title="举手 (Alt+Y)" aria-label="举手" data-icon="hand"></button>
+            <button id="moreButton" type="button" class="ctrl" title="更多" aria-label="更多" data-icon="more"></button>
+            <button id="leaveButton" type="button" class="ctrl ctrl-leave" title="离开会议" aria-label="离开会议" data-icon="phoneOff"></button>
+          </div>
+
+          <div class="cb-side cb-right">
+            <button id="peopleButton" type="button" class="ctrl ctrl-flat" title="参会者" aria-label="参会者" data-icon="users"><span id="peopleBadge" class="badge hidden"></span></button>
+            <button id="chatButton" type="button" class="ctrl ctrl-flat" title="聊天 (Alt+H)" aria-label="聊天" data-icon="chat"><span id="chatBadge" class="badge is-alert hidden"></span></button>
+            <button id="aiButton" type="button" class="ctrl ctrl-flat" title="AI 助手 (Alt+A)" aria-label="AI 助手" data-icon="sparkles"></button>
+          </div>
         </footer>
 
-        <section id="whiteboardPanel" class="whiteboard-panel hidden" aria-label="协作白板">
+        <section id="whiteboardPanel" class="whiteboard-panel hidden" aria-label="协作白板" tabindex="-1">
           <header class="whiteboard-toolbar">
-            <div class="tool-group" aria-label="白板工具">
-              <button type="button" class="tool-button active" data-tool="pen">手写</button>
-              <button type="button" class="tool-button" data-tool="highlighter">荧光笔</button>
-              <button type="button" class="tool-button" data-tool="text">文字</button>
-              <button type="button" class="tool-button" data-tool="eraser">橡皮</button>
+            <div class="seg" aria-label="白板工具">
+              <button type="button" data-tool="pen" title="手写" data-icon="pen" data-icon-size="17"></button>
+              <button type="button" data-tool="highlighter" title="荧光笔" data-icon="highlighter" data-icon-size="17"></button>
+              <button type="button" data-tool="text" title="文字" data-icon="type" data-icon-size="17"></button>
+              <button type="button" data-tool="eraser" title="橡皮" data-icon="eraser" data-icon-size="17"></button>
             </div>
-
-            <label class="compact-field">
-              颜色
-              <input id="whiteboardColor" type="color" value="#2563eb" />
-            </label>
-
-            <label class="compact-field range-field">
-              粗细
+            <div class="swatches">
+              <button type="button" class="swatch active" data-color="#0071e3" style="background:#0071e3" aria-label="蓝"></button>
+              <button type="button" class="swatch" data-color="#1d1d1f" style="background:#1d1d1f" aria-label="黑"></button>
+              <button type="button" class="swatch" data-color="#d70015" style="background:#d70015" aria-label="红"></button>
+              <button type="button" class="swatch" data-color="#248a3d" style="background:#248a3d" aria-label="绿"></button>
+              <button type="button" class="swatch" data-color="#c93400" style="background:#c93400" aria-label="橙"></button>
+              <label class="swatch swatch-custom" title="自定义颜色"><input id="whiteboardColor" type="color" value="#0071e3" /></label>
+            </div>
+            <label class="range-field" title="粗细">
               <input id="whiteboardSize" type="range" min="2" max="32" value="5" />
             </label>
-
-            <input id="whiteboardTextInput" class="whiteboard-text-input" maxlength="200" placeholder="输入文字后点击白板" />
-
-            <div class="whiteboard-actions">
-              <button id="clearWhiteboardButton" type="button" class="secondary">清空</button>
-              <button id="closeWhiteboardButton" type="button" class="secondary">关闭</button>
+            <input id="whiteboardTextInput" class="input wb-text hidden" maxlength="200" placeholder="输入文字，然后点击白板放置" />
+            <div class="wb-actions">
+              <button id="undoWhiteboardButton" type="button" class="icon-btn" title="撤销 (Ctrl+Z)" aria-label="撤销" data-icon="undo" data-icon-size="17"></button>
+              <button id="exportWhiteboardButton" type="button" class="icon-btn" title="导出 PNG" aria-label="导出图片" data-icon="image" data-icon-size="17"></button>
+              <button id="clearWhiteboardButton" type="button" class="icon-btn" title="清空" aria-label="清空" data-icon="trash" data-icon-size="17"></button>
+              <button id="closeWhiteboardButton" type="button" class="btn btn-sm">完成</button>
             </div>
           </header>
-
           <div id="whiteboardSurface" class="whiteboard-surface">
-            <canvas id="whiteboardCanvas"></canvas>
+            <canvas id="whiteboardCanvas" tabindex="0"></canvas>
           </div>
         </section>
+      </section>
+
+      <!-- 会议结束 -->
+      <section id="endView" class="end-view hidden" aria-label="会议已结束">
+        <div class="end-card">
+          <span class="end-ico" data-icon="check" data-icon-size="26"></span>
+          <h2 id="endTitle">你已离开会议</h2>
+          <p id="endMeta" class="muted tabular"></p>
+          <div id="endSummary" class="end-summary hidden"></div>
+          <div class="end-actions">
+            <button id="endMinutesButton" type="button" class="btn hidden" data-icon="file" data-icon-size="16">下载会议纪要</button>
+            <button id="endTranscriptButton" type="button" class="btn hidden" data-icon="download" data-icon-size="16">下载转写</button>
+          </div>
+          <div class="end-actions">
+            <button id="rejoinButton" type="button" class="btn btn-primary">重新加入</button>
+            <a class="btn" href="/">返回首页</a>
+          </div>
+        </div>
       </section>
     </main>
 

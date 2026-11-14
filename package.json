@@ -1,14 +1,19 @@
 {
   "name": "video-meeting-web",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node --env-file-if-exists=.env server.js",
+    "dev": "node --watch --env-file-if-exists=.env server.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
     "express": "^5.1.0",
     "ws": "^8.18.3"
+  },
+  "description": "AI 视频会议：WebRTC 音视频 + 实时字幕翻译 + AI 笔记与会议纪要",
+  "engines": {
+    "node": ">=22"
   }
 }
